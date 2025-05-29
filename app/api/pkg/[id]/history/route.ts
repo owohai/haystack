@@ -75,9 +75,9 @@ async function addHistory(data: {
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const { id } = await params;
+    const id = (await params).id
     const body = await req.json();
 
     if (!id) return new Response('', { status: 400 }) // no id in url param

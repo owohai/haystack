@@ -115,11 +115,9 @@ async function updateData(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-
-  if (!id) return new Response('', { status: 400 }) // no id in url param
+  const id = (await params).id
 
   if (isValid(id)) {
     let data = await getData(id.slice(2)); // get data (make sure ID is SLICED!!!!)
@@ -137,12 +135,11 @@ export async function GET(
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const body = await req.json();
-  const { id } = await params;
+  const id = (await params).id
 
-  if (!id) return new Response('', { status: 400 })
   
   try {
     var check = v.validate(body, pkgSchema)
@@ -165,6 +162,6 @@ export async function PATCH(
     }
   } catch (e) {
     console.log(e)
-    return NextResponse.json({ err: "i called the cops on you", e: e }, { status: 500 });
+    return NextResponse.json({ err: "i called the cops on you" }, { status: 500 });
   }
 }
