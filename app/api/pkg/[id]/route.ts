@@ -44,6 +44,24 @@ async function isKeyValid(key: string) {
     return response.length > 0; // true/false
 }
 
+/* Crosschecks both tracking table's operator and the operator assigned the apikey */
+/* Lets say Operator A with the name "SCUMBAG" and has the APIKEY "good", tried to 
+   authorize a request to modify Operator B with the name "MAILWIND"'s assigned pkg
+   This checks the given APIKEY to operator's name matches up with the one on the 
+   package. if not, return null (if the keys dont match or the entire apikey doesn't exist)
+*/
+async function combinedKeyInfo(id: string, key: string) {
+  const response = await sql`
+    SELECT t.*
+    FROM tracking t
+    INNER JOIN apikeys a ON a.operator = t.handler
+    WHERE t.id = ${id}
+      AND a.key = ${key}
+  `;
+
+  return response[0] ?? null;
+}
+
 /* Getting data from database */
 async function getData(id: string) {
   const response = await sql`
@@ -143,16 +161,15 @@ export async function PATCH(
   
   try {
     var check = v.validate(body, pkgSchema)
-    var apiKeyValidation = await isKeyValid(body.apiKey);
-
-    if (apiKeyValidation === false) return new Response('', { status: 401 })
+    var keyValidation = await combinedKeyInfo(id.slice(2), body.apiKey)
+    
+    if (keyValidation === null) return new Response('', { status: 401 })
       
     if (check.valid) {
       if (isValid(id)) {
         let updated = await updateData(id.slice(2), body);
 
         if (!updated) return NextResponse.json({ err: "id doesn't exist" }, { status: 500 });
-
         return new Response('', { status: 200 })
       } else {
         return NextResponse.json({ err: "id not valid; see schema" }, { status: 400 }) // id is not valid according to schema

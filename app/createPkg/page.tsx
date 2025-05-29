@@ -33,10 +33,13 @@ export default function Home() {
         }),
       });
 
-      let data = await res.json();
-      setMessage({ info: `Package created. Tracking number is ${data.id}`, trackingNo: `${data.id}` })
+      const body = await res.json().catch(() => ({}));
 
-      if (!res.ok) throw new Error("Failed to create package");
+      if (!res.ok) {
+        return setMessage({ info: `Failed to create package: ${body.err || "unknown error or API key is invalid"}`, trackingNo: "" });
+      }
+
+      setMessage({ info: `Package created. Tracking number is ${body.id}`, trackingNo: `${body.id}` })
 
     } catch (err) {
       setMessage({ info: `${err || "unknown error"}`, trackingNo: "" })

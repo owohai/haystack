@@ -37,10 +37,24 @@ async function isKeyValid(key: string) {
     return response.length > 0; // true/false
 }
 
+/* API key validation + operator info (to register under operator name) */
+async function combinedKeyInfo(key: string) {
+    const result = await sql`
+    SELECT operator
+    FROM apikeys
+    WHERE key = ${key} AND id IS NOT NULL
+    LIMIT 1
+  `;
+
+    if (result.length === 0) return { isValid: false, operatorName: null };
+    return { isValid: true, operatorName: result[0].operator };
+}
+
 async function createData(data: {
     sender: string;
     receiver: string;
     country_code: string;
+    handler: string;
     express?: boolean;
     signature?: boolean;
     abandon?: boolean;
@@ -48,11 +62,13 @@ async function createData(data: {
     const {
         sender,
         receiver,
+        handler,
         express = false,
         signature = false,
         abandon = false
     } = data;
 
+    console.log(data)
     const country_code = data.country_code.toUpperCase();
 
     const response = await sql`
@@ -62,14 +78,16 @@ async function createData(data: {
       express,
       signature,
       abandon,
-      country_code
+      country_code,
+      handler
     ) VALUES (
       ${sender},
       ${receiver},
       ${express},
       ${signature},
       ${abandon},
-      ${country_code}
+      ${country_code},
+      ${handler}
     )
       RETURNING id;
   `;
@@ -84,12 +102,15 @@ async function createData(data: {
 export async function POST(req: NextRequest) {
     const body = await req.json();
     var check = v.validate(body, pkgSchema)
-    var apiKeyValidation = await isKeyValid(body.apiKey);
-
-    if (apiKeyValidation === false) return new Response('', { status: 401 })
+    var keyValidation = await combinedKeyInfo(body.apiKey)
+    
+    if (keyValidation.isValid === false) return new Response('', { status: 401 })
 
     if (check.valid) {
-        let created = await createData(body)
+
+        let compliation =  Object.assign(body, { "handler": `${keyValidation.operatorName}` })
+    
+        let created = await createData(compliation)
         return NextResponse.json({ id: body.country_code + created });
     } else {
         return NextResponse.json({ err: "i'm calling the cops on you" }, { status: 500 });

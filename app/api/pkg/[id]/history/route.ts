@@ -34,6 +34,24 @@ async function isKeyValid(key: string) {
     return response.length > 0; // true/false
 }
 
+/* Crosschecks both tracking table's operator and the operator assigned the apikey */
+/* Lets say Operator A with the name "SCUMBAG" and has the APIKEY "good", tried to 
+   authorize a request to modify Operator B with the name "MAILWIND"'s assigned pkg
+   This checks the given APIKEY to operator's name matches up with the one on the 
+   package. if not, return null (if the keys dont match or the entire apikey doesn't exist)
+*/
+async function combinedKeyInfo(id: string, key: string) {
+    const response = await sql`
+    SELECT t.*
+    FROM tracking t
+    INNER JOIN apikeys a ON a.operator = t.handler
+    WHERE t.id = ${id}
+      AND a.key = ${key}
+  `;
+
+    return response[0] ?? null;
+}
+
 async function canIUpdate(id: string) {
     const response = await sql`
     SELECT 1
@@ -84,10 +102,10 @@ export async function POST(
 
     try {
         var check = v.validate(body, historySchema)
-        var apiKeyValidation = await isKeyValid(body.apiKey);
+        var keyValidation = await combinedKeyInfo(id.slice(2), body.apiKey)
         var updateOrNot = await canIUpdate(id.slice(2))
 
-        if (apiKeyValidation === false) return new Response('', { status: 401 })
+        if (keyValidation === null) return new Response('', { status: 401 })
 
         if (check.valid) {
             if (isValid(id)) {

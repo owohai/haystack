@@ -36,7 +36,7 @@ export default function Home() {
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to update package details");
+      if (!res.ok) throw new Error("Failed to update package details (your API key might not be assigned to the package)");
       if (res.ok) return setMessage({ info: "Updated package details successfully" })
     } catch (err) {
       setMessage({ info: `${err}` })
