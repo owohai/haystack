@@ -1,4 +1,4 @@
-![Whymathematicianscantfindthehayinahaystack]()
+<img src="https://github.com/owohai/haystack/blob/main/public/haystackbranding.jpg?raw=true" width="1000" title="Why mathematicians can't find the hay in a haystack" alt="Ray Romano saying What do you think?"/>
 
 # haystack
 interworld-international package tracking. powered by neondb and a lot of prayers 🙏
