@@ -34,9 +34,9 @@ interworld-international package tracking. powered by neondb and a lot of prayer
   "sender": "owahai",
   "receiver": "yelp street",
   "country_code": "KW",
-  "express": <optional>,
-  "signature": <optional>,
-  "abandon": <optional>,
+  "express": "<optional>",
+  "signature": "<optional>",
+  "abandon": "<optional>"
 }
 ```
 returns you a trackable package ID e.g `KW685620752`
@@ -48,10 +48,10 @@ returns you a trackable package ID e.g `KW685620752`
   "sender": "<optional>",
   "receiver": "<optional>",
   "country_code": "<optional>",
-  "express": <optional>,
-  "signature": <optional>,
-  "abandon": <optional>,
-  "delivered": <optional>,
+  "express": "<optional>",
+  "signature": "<optional>",
+  "abandon": "<optional>",
+  "delivered": "<optional>"
 }
 ```
 a simple `200 OK` response will be given if package data was edited successfully
@@ -60,8 +60,8 @@ a simple `200 OK` response will be given if package data was edited successfully
 **`POST`**`/api/pkg/<id>/history`: adds history entry; request format:
 ```JSON
 {
-  info: "info"
-  location: "location"
+  "info": "info"
+  "location": "location"
 }
 ```
 a simple `200 OK` response will be given if history addition was successful. history created previously cannot be modified or edited
