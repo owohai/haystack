@@ -107,7 +107,6 @@ export async function POST(req: NextRequest) {
     if (keyValidation.isValid === false) return new Response('', { status: 401 })
 
     if (check.valid) {
-
         let compliation =  Object.assign(body, { "handler": `${keyValidation.operatorName}` })
     
         let created = await createData(compliation)
