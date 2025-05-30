@@ -166,7 +166,9 @@ export async function GET(
   const id = (await params).id
 
   if (isValid(id)) {
-    let data = await getData(id.slice(2)); // get data (make sure ID is SLICED!!!!)
+    let data = await getData(id.slice(2)); // get data in db (make sure ID is SLICED!!!!)
+
+    if(id.replace(/[^a-zA-Z]/g, "") !== data.country_code) return NextResponse.json({ err: 'Country code does not match' }, { status: 404 })
     if (!data) return NextResponse.json({ err: 'no data in db' }, { status: 404 }) // id not found in db/no data
 
     return NextResponse.json(data) // id found, sending data
