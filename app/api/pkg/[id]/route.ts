@@ -168,12 +168,12 @@ export async function GET(
   if (isValid(id)) {
     let data = await getData(id.slice(2)); // get data in db (make sure ID is SLICED!!!!)
 
-    if(id.replace(/[^a-zA-Z]/g, "") !== data.country_code) return NextResponse.json({ err: 'Country code does not match' }, { status: 404 })
     if (!data) return NextResponse.json({ err: 'no data in db' }, { status: 404 }) // id not found in db/no data
+    if (id.replace(/[^a-zA-Z]/g, "") !== data.country_code) return NextResponse.json({ err: 'Country code does not match' }, { status: 404 })
 
     return NextResponse.json(data) // id found, sending data
   } else {
-    return NextResponse.json({ err: "id not valid; see schema" }, { status: 400 }) // id is not valid according to schema
+    return NextResponse.json({ err: "id not valid; see schema" }, { status: 404 }) // id is not valid according to schema
   }
 }
 
@@ -197,10 +197,10 @@ export async function PATCH(
 
     if (check.valid) {
       if (isValid(id)) {
-        if (body.handler) { 
-          let handlerCheck = await isHandlerValid(body.handler) 
-        
-          if(handlerCheck === false) {
+        if (body.handler) {
+          let handlerCheck = await isHandlerValid(body.handler)
+
+          if (handlerCheck === false) {
             return NextResponse.json({ err: "handler doesn't exist, handover cancelled" }, { status: 500 });
           }
         }
@@ -209,7 +209,7 @@ export async function PATCH(
         if (!updated) return NextResponse.json({ err: "id doesn't exist" }, { status: 500 });
         return new Response('', { status: 200 })
       } else {
-        return NextResponse.json({ err: "id not valid; see schema" }, { status: 400 }) // id is not valid according to schema
+        return NextResponse.json({ err: "id not valid; see schema" }, { status: 404 }) // id is not valid according to schema
       }
     } else {
       return NextResponse.json({ err: "body not valid; see schema" }, { status: 400 }) // id is not valid according to schema
