@@ -51,7 +51,8 @@ returns you a trackable package ID e.g `KW685620752`
   "express": "<optional>",
   "signature": "<optional>",
   "abandon": "<optional>",
-  "delivered": "<optional>"
+  "delivered": "<optional>",
+  "handler": "<optional>"
 }
 ```
 a simple `200 OK` response will be given if package data was edited successfully
