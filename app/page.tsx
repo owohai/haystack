@@ -86,19 +86,21 @@ export default function Home() {
           {trackingData && trackingData.history.length > 0 && (
             <div className="bg-gray-700 p-5 shadow-md border border-gray-600">
               <p className="text-gray-200 font-medium">
-                <strong>Enroute</strong>: {trackingData.history[0].info}
+                <strong>Enroute</strong>: {trackingData.history[trackingData.history.length - 1].info}
               </p>
             </div>
           )}
 
           {/* Timeline */}
-          {trackingData?.history.map((event, index) => (
+          {trackingData?.history && [...trackingData.history].reverse().map((event, index) => (
             <div key={index} className="relative pl-6 pb-3">
               <span className="absolute left-0 top-1 text-gray-400">▲</span>
               <p className="font-medium">{event.info}</p>
               <p className="text-sm text-gray-400">{event.location}</p>
             </div>
           ))}
+
+
         </div>
       </div>
     </div>

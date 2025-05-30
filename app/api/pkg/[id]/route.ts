@@ -17,6 +17,7 @@ let pkgSchema = {
     signature: { type: "boolean" },
     abandon: { type: "boolean" },
     delivered: { type: "boolean" },
+    handler: { type: "string" },
     country_code: { type: "string", maxLength: 2 }
   },
   required: [
@@ -34,14 +35,14 @@ function isValid(id: string) {
 
 /* API key validation */
 async function isKeyValid(key: string) {
-    const response = await sql`
+  const response = await sql`
     SELECT 1
     FROM apikeys
     WHERE key = ${key} AND id IS NOT NULL
     LIMIT 1
   `;
 
-    return response.length > 0; // true/false
+  return response.length > 0; // true/false
 }
 
 /* Crosschecks both tracking table's operator and the operator assigned the apikey */
@@ -85,6 +86,18 @@ async function getData(id: string) {
   return response[0];
 }
 
+/* API key validation */
+async function isHandlerValid(name: string) {
+  const response = await sql`
+    SELECT 1
+    FROM apikeys
+    WHERE operator = ${name} AND id IS NOT NULL
+    LIMIT 1
+  `;
+
+  return response.length > 0; // true/false
+}
+
 /* Update data according to partial input to database */
 async function updateData(
   id: string,
@@ -96,18 +109,33 @@ async function updateData(
     abandon: boolean;
     delivered: boolean;
     country_code: string;
+    handler: string;
   }>
 ) {
   const updatableFields = [
     "sender", "receiver", "express", "signature",
-    "abandon", "delivered", "country_code"
+    "abandon", "delivered", "country_code", "handler"
   ];
 
-  // Filter out invalid fields and ignore empty strings for sender/receiver
-  const fieldsToUpdate = Object.entries(updates).filter(([key, value]) =>
-    updatableFields.includes(key) &&
-    !(["sender", "receiver", "country_code"].includes(key) && value === "")
-  );
+  // Special logic for filtering updates
+  const fieldsToUpdate = Object.entries(updates).filter(([key, value]) => {
+    // Allow empty string for 'handler'
+    if (key === "handler" && typeof value === "string") {
+      isHandlerValid(value).then(res => {
+        if (res === false) {
+          return console.error('handler is invalid')
+        }
+      })
+        .catch(err => {
+          console.error("Error:", err);
+        });
+    }
+
+    // Disallow empty string for these fields
+    if (["sender", "receiver", "country_code", "handler"].includes(key) && value === "") return false;
+
+    return updatableFields.includes(key);
+  });
 
   if (fieldsToUpdate.length === 0) {
     throw new Error("nothing to update");
@@ -158,15 +186,22 @@ export async function PATCH(
   const body = await req.json();
   const id = (await params).id
 
-  
+
   try {
     var check = v.validate(body, pkgSchema)
     var keyValidation = await combinedKeyInfo(id.slice(2), body.apiKey)
-    
+
     if (keyValidation === null) return new Response('', { status: 401 })
-      
+
     if (check.valid) {
       if (isValid(id)) {
+        if (body.handler) { 
+          let handlerCheck = await isHandlerValid(body.handler) 
+        
+          if(handlerCheck === false) {
+            return NextResponse.json({ err: "handler doesn't exist, handover cancelled" }, { status: 500 });
+          }
+        }
         let updated = await updateData(id.slice(2), body);
 
         if (!updated) return NextResponse.json({ err: "id doesn't exist" }, { status: 500 });
