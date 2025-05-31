@@ -92,13 +92,19 @@ export default function Home() {
           )}
 
           {/* Timeline */}
-          {trackingData?.history && [...trackingData.history].reverse().map((event, index) => (
-            <div key={index} className="relative pl-6 pb-3">
-              <span className="absolute left-0 top-1 text-gray-400">▲</span>
-              <p className="font-medium">{event.info}</p>
-              <p className="text-sm text-gray-400">{event.location}</p>
-            </div>
-          ))}
+          {trackingData?.history && [...trackingData.history].reverse().map((event, index, arr) => {
+            const isLast = index === 0; // because we reversed the history
+            const symbol = isLast && trackingData.delivered ? '✓' : '▲';
+
+            return (
+              <div key={index} className="relative pl-6 pb-3">
+                <span className="absolute left-0 top-1 text-gray-400">{symbol}</span>
+                <p className="font-medium">{event.info}</p>
+                <p className="text-sm text-gray-400">{event.location}</p>
+              </div>
+            );
+          })}
+
 
 
         </div>

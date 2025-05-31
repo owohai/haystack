@@ -100,11 +100,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     var check = v.validate(body, pkgSchema)
     var keyValidation = await combinedKeyInfo(body.apiKey)
-    
+
     if (keyValidation.isValid === false) return new Response('', { status: 401 })
 
     if (check.valid) {
-        let compliation =  Object.assign(body, { "handler": `${keyValidation.operatorName}`, "country_code": `${keyValidation.countryCode}` })
+        let compliation = Object.assign(body, { "handler": `${keyValidation.operatorName}`, "country_code": `${keyValidation.countryCode}` })
 
         let created = await createData(compliation)
         return NextResponse.json({ id: body.country_code + created });
