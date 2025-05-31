@@ -18,7 +18,6 @@ let pkgSchema = {
     abandon: { type: "boolean" },
     delivered: { type: "boolean" },
     handler: { type: "string" },
-    country_code: { type: "string", maxLength: 2 }
   },
   required: [
     "apiKey",
@@ -114,7 +113,7 @@ async function updateData(
 ) {
   const updatableFields = [
     "sender", "receiver", "express", "signature",
-    "abandon", "delivered", "country_code", "handler"
+    "abandon", "delivered", "handler"
   ];
 
   // Special logic for filtering updates
@@ -132,7 +131,7 @@ async function updateData(
     }
 
     // Disallow empty string for these fields
-    if (["sender", "receiver", "country_code", "handler"].includes(key) && value === "") return false;
+    if (["sender", "receiver", "handler"].includes(key) && value === "") return false;
 
     return updatableFields.includes(key);
   });

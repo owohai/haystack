@@ -6,7 +6,6 @@ export default function Home() {
   const [trackingNumber, setTrackingNumber] = useState("");
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
-  const [country_code, setCountryCode] = useState("");
   const [handler, setHandler] = useState("");
   const [express, setExpress] = useState(false); // "true" | "false"
   const [signature, setSignature] = useState(false); // "true" | "false"
@@ -29,7 +28,6 @@ export default function Home() {
           apiKey,
           sender,
           receiver,
-          country_code,
           handler,
           express,
           signature,
@@ -114,20 +112,6 @@ export default function Home() {
               value={receiver}
               onChange={(e) => setReceiver(e.target.value)}
               placeholder="Receiver details"
-              className="w-full p-2 border border-gray-700 bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist-mono)] focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="w-full">
-            <div className="flex items-baseline gap-2 pt-1">
-              <p>Country Code</p>
-              <p className="italic text-sm text-gray-400">(optional)</p>
-            </div>
-            <input
-              type="text"
-              value={country_code}
-              onChange={(e) => setCountryCode(e.target.value)}
-              placeholder="2 character long country code"
               className="w-full p-2 border border-gray-700 bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist-mono)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

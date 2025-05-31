@@ -5,16 +5,22 @@ export default function Home() {
   const [apiKey, setApiKey] = useState("");
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
-  const [country_code, setCountryCode] = useState("");
-  const [express, setExpress] = useState(false); // "true" | "false"
-  const [signature, setSignature] = useState(false); // "true" | "false"
-  const [abandon, setAbandon] = useState(false); // "true" | "false"
+  const [history_location, setHistoryLocation] = useState("");
+  const [express, setExpress] = useState(false);
+  const [signature, setSignature] = useState(false);
+  const [abandon, setAbandon] = useState(false);
   const [msg, setMessage] = useState<{ info: string, trackingNo: string } | null>(null);
-
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
+
+    if (!history_location) {
+      setMessage({ info: `Failed to create package: no history location`, trackingNo: "" });
+      return;
+    }
+
+    let trackingNumber = "";
 
     try {
       const res = await fetch('/api/pkg', {
@@ -26,7 +32,6 @@ export default function Home() {
           apiKey,
           sender,
           receiver,
-          country_code,
           express,
           signature,
           abandon
@@ -35,14 +40,41 @@ export default function Home() {
 
       const body = await res.json().catch(() => ({}));
 
-      if (!res.ok) {
-        return setMessage({ info: `Failed to create package: ${body.err || "unknown error or API key is invalid"}`, trackingNo: "" });
+      if (!res.ok || !body.id) {
+        setMessage({ info: `Failed to create package: ${body.err || "unknown error or API key is invalid"}`, trackingNo: "" });
+        return;
       }
 
-      setMessage({ info: `Package created. Tracking number is ${body.id}`, trackingNo: `${body.id}` })
+      trackingNumber = body.id;
+      setMessage({ info: `Package created. Tracking number is ${trackingNumber}`, trackingNo: trackingNumber });
 
     } catch (err) {
-      setMessage({ info: `${err || "unknown error"}`, trackingNo: "" })
+      console.error(err);
+      setMessage({ info: `Error: ${String(err)}`, trackingNo: "" });
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/pkg/${trackingNumber}/history`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          apiKey,
+          info: "Package Information Registered",
+          location: history_location
+        }),
+      });
+
+      const body = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        setMessage({ info: `Failed to update package history, but tracking number was generated: ${trackingNumber}`, trackingNo: trackingNumber });
+      } else {
+        console.log("Updated package history successfully");
+      }
+    } catch (err) {
       console.error(err);
     }
   };
@@ -70,11 +102,7 @@ export default function Home() {
           </div>
         )}
 
-
-
-        {/* Input */}
         <form onSubmit={handleSubmit} className="flex flex-col items-center gap-4">
-
           <div className="w-full">
             <p className="pt-1">Super Secret API Key</p>
             <input
@@ -112,19 +140,19 @@ export default function Home() {
           </div>
 
           <div className="w-full">
-            <p className="pt-1">Country Code</p>
+            <p className="pt-1">Initial History Location</p>
             <input
               type="text"
-              value={country_code}
-              onChange={(e) => setCountryCode(e.target.value)}
-              placeholder="2 character long country code"
+              value={history_location}
+              onChange={(e) => setHistoryLocation(e.target.value)}
+              placeholder="What will appear under the inital history entry"
               className="w-full p-2 border border-gray-700 bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist-mono)] focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
 
           <div className="w-full">
-            <label className="flex items-center gap-3 pt-1  bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist)] cursor-pointer select-none">
+            <label className="flex items-center gap-3 pt-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={express}
@@ -136,7 +164,7 @@ export default function Home() {
           </div>
 
           <div className="w-full">
-            <label className="flex items-center gap-3 pt-1  bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist)] cursor-pointer select-none">
+            <label className="flex items-center gap-3 pt-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={signature}
@@ -148,7 +176,7 @@ export default function Home() {
           </div>
 
           <div className="w-full">
-            <label className="flex items-center gap-3 pt-1  bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist)] cursor-pointer select-none">
+            <label className="flex items-center gap-3 pt-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={abandon}
@@ -166,7 +194,6 @@ export default function Home() {
             Create Package
           </button>
         </form>
-
       </div>
     </div>
   );

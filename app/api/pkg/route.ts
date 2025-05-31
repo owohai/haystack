@@ -14,13 +14,11 @@ let pkgSchema = {
         express: { type: "boolean" },
         signature: { type: "boolean" },
         abandon: { type: "boolean" },
-        country_code: { type: "string", minLength: 2, maxLength: 2 }
     },
     required: [
         "apiKey",
         "sender",
         "receiver",
-        "country_code"
     ],
     additionalProperties: false
 };
@@ -40,14 +38,14 @@ async function isKeyValid(key: string) {
 /* API key validation + operator info (to register under operator name) */
 async function combinedKeyInfo(key: string) {
     const result = await sql`
-    SELECT operator
+    SELECT operator, country_code
     FROM apikeys
     WHERE key = ${key} AND id IS NOT NULL
     LIMIT 1
   `;
 
-    if (result.length === 0) return { isValid: false, operatorName: null };
-    return { isValid: true, operatorName: result[0].operator };
+    if (result.length === 0) return { isValid: false, operatorName: null, countryCode: null };
+    return { isValid: true, operatorName: result[0].operator, countryCode: result[0].country_code };
 }
 
 async function createData(data: {
@@ -68,8 +66,7 @@ async function createData(data: {
         abandon = false
     } = data;
 
-    console.log(data)
-    const country_code = data.country_code.toUpperCase();
+    const country_code = data.country_code.toUpperCase(); // redundancy check
 
     const response = await sql`
     INSERT INTO tracking (
@@ -107,8 +104,8 @@ export async function POST(req: NextRequest) {
     if (keyValidation.isValid === false) return new Response('', { status: 401 })
 
     if (check.valid) {
-        let compliation =  Object.assign(body, { "handler": `${keyValidation.operatorName}` })
-    
+        let compliation =  Object.assign(body, { "handler": `${keyValidation.operatorName}`, "country_code": `${keyValidation.countryCode}` })
+
         let created = await createData(compliation)
         return NextResponse.json({ id: body.country_code + created });
     } else {
