@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { neon } from '@neondatabase/serverless';
-import { Validator } from 'jsonschema';
 
 const sql = neon(`${process.env.DATABASE_URL}`);
 

@@ -28,7 +28,7 @@ let pkgSchema = {
 
 /* Validate ID */
 function isValid(id: string) {
-  const pattern = /^[A-Z]{2}\d{9}$/;
+  const pattern = /^[A-Z]{3}\d{9}$/;
   return pattern.test(id);
 }
 
@@ -140,7 +140,7 @@ async function updateData(
     throw new Error("nothing to update");
   }
 
-  const setClauses = fieldsToUpdate.map(([key], idx) => `${key} = $${idx + 2}`);
+  const setClauses = fieldsToUpdate.map(([key], idx) => `${key} = $${idx + 3}`);
   const values = fieldsToUpdate.map(([, value]) => value);
 
   const query = `
@@ -165,7 +165,7 @@ export async function GET(
   const id = (await params).id
 
   if (isValid(id)) {
-    let data = await getData(id.slice(2)); // get data in db (make sure ID is SLICED!!!!)
+    let data = await getData(id.slice(3)); // get data in db (make sure ID is SLICED!!!!)
 
     if (!data) return NextResponse.json({ err: 'no data in db' }, { status: 404 }) // id not found in db/no data
     if (id.replace(/[^a-zA-Z]/g, "") !== data.country_code) return NextResponse.json({ err: 'Country code does not match' }, { status: 404 })
@@ -190,7 +190,7 @@ export async function PATCH(
 
   try {
     var check = v.validate(body, pkgSchema)
-    var keyValidation = await combinedKeyInfo(id.slice(2), body.apiKey)
+    var keyValidation = await combinedKeyInfo(id.slice(3), body.apiKey)
 
     if (keyValidation === null) return new Response('', { status: 401 })
 
@@ -203,7 +203,7 @@ export async function PATCH(
             return NextResponse.json({ err: "handler doesn't exist, handover cancelled" }, { status: 500 });
           }
         }
-        let updated = await updateData(id.slice(2), body);
+        let updated = await updateData(id.slice(3), body);
 
         if (!updated) return NextResponse.json({ err: "id doesn't exist" }, { status: 500 });
         return new Response('', { status: 200 })

@@ -18,7 +18,7 @@ let historySchema = {
 
 /* Validate ID */
 function isValid(id: string) {
-    const pattern = /^[A-Z]{2}\d{9}$/;
+    const pattern = /^[A-Z]{3}\d{9}$/;
     return pattern.test(id);
 }
 
@@ -91,7 +91,7 @@ async function addHistory(data: {
 
 
 /***********************************/
-/*  Update package  history (POST) */
+/*  Update package history (POST) */
 /***********************************/
 
 export async function POST(
@@ -105,8 +105,8 @@ export async function POST(
 
     try {
         var check = v.validate(body, historySchema)
-        var keyValidation = await combinedKeyInfo(id.slice(2), body.apiKey)
-        var updateOrNot = await canIUpdate(id.slice(2))
+        var keyValidation = await combinedKeyInfo(id.slice(3), body.apiKey)
+        var updateOrNot = await canIUpdate(id.slice(3))
 
         if (keyValidation === null) return new Response('', { status: 401 })
 
@@ -114,7 +114,7 @@ export async function POST(
             if (isValid(id)) {
                 if (updateOrNot === true) return NextResponse.json({ err: "cannot update package history because it has been delivered already" }, { status: 400 })
 
-                let compliation = Object.assign(body, { "id": `${id.slice(2)}` }) // horrible cobe yes cobe
+                let compliation = Object.assign(body, { "id": `${id.slice(3)}` }) // horrible cobe yes cobe
                 addHistory(body)
                 return new Response('', { status: 200 })
                 //addHistory
