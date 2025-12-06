@@ -32,18 +32,6 @@ function isValid(id: string) {
   return pattern.test(id);
 }
 
-/* API key validation */
-async function isKeyValid(key: string) {
-  const response = await sql`
-    SELECT 1
-    FROM apikeys
-    WHERE key = ${key} AND id IS NOT NULL
-    LIMIT 1
-  `;
-
-  return response.length > 0; // true/false
-}
-
 /* Crosschecks both tracking table's operator and the operator assigned the apikey */
 /* Lets say Operator A with the name "SCUMBAG" and has the APIKEY "good", tried to 
    authorize a request to modify Operator B with the name "MAILWIND"'s assigned pkg
@@ -90,11 +78,24 @@ async function isHandlerValid(name: string) {
   const response = await sql`
     SELECT 1
     FROM apikeys
-    WHERE operator = ${name} AND id IS NOT NULL
+    WHERE country_code = ${name} AND id IS NOT NULL
     LIMIT 1
   `;
 
   return response.length > 0; // true/false
+}
+
+/* API key validation */
+async function getHandlerName(countryCode: string) {
+ const response = await sql`
+    SELECT operator
+    FROM apikeys
+    WHERE country_code = ${countryCode}
+      AND id IS NOT NULL
+    LIMIT 1
+  `;
+
+  return response[0].operator
 }
 
 /* Update data according to partial input to database */
@@ -112,35 +113,50 @@ async function updateData(
   }>
 ) {
   const updatableFields = [
-    "sender", "receiver", "express", "signature",
-    "abandon", "delivered", "handler"
-  ];
+    "sender",
+    "receiver",
+    "express",
+    "signature",
+    "abandon",
+    "delivered",
+    "handler"
+  ] as const;
 
-  // Special logic for filtering updates
-  const fieldsToUpdate = Object.entries(updates).filter(([key, value]) => {
-    // Allow empty string for 'handler'
-    if (key === "handler" && typeof value === "string") {
-      isHandlerValid(value).then(res => {
-        if (res === false) {
-          return console.error('handler is invalid')
-        }
-      })
-        .catch(err => {
-          console.error("Error:", err);
-        });
+  const fieldsToUpdate: [string, any][] = [];
+
+  for (const [key, value] of Object.entries(updates)) {
+    if (value === undefined || value === null) continue;
+
+    if (!updatableFields.includes(key as any)) continue;
+
+    if (["sender", "receiver", "handler"].includes(key) && value === "") {
+      continue;
     }
 
-    // Disallow empty string for these fields
-    if (["sender", "receiver", "handler"].includes(key) && value === "") return false;
+    let finalValue = value
 
-    return updatableFields.includes(key);
-  });
+    if (key === "handler" && typeof value === "string") {
+      const isValid = await isHandlerValid(value);
+      if (!isValid) {
+        throw new Error("Handler is invalid");
+      }
+      // handler was validated, time to cross-refrence the country code with its respective local handler
+      let localHandler = await getHandlerName(value);
+      finalValue = localHandler
+      console.log(localHandler)
+    }
 
-  if (fieldsToUpdate.length === 0) {
-    throw new Error("nothing to update");
+    fieldsToUpdate.push([key, finalValue]);
   }
 
-  const setClauses = fieldsToUpdate.map(([key], idx) => `${key} = $${idx + 3}`);
+  if (fieldsToUpdate.length === 0) {
+    throw new Error("Nothing to update");
+  }
+
+  const setClauses = fieldsToUpdate.map(
+    ([key], idx) => `${key} = $${idx + 2}`
+  );
+
   const values = fieldsToUpdate.map(([, value]) => value);
 
   const query = `
@@ -177,7 +193,7 @@ export async function GET(
 }
 
 /***********************************/
-/*  Update package detials (PATCH) */
+/*  Update package details (PATCH) */
 /***********************************/
 
 export async function PATCH(
@@ -200,6 +216,7 @@ export async function PATCH(
           let handlerCheck = await isHandlerValid(body.handler)
 
           if (handlerCheck === false) {
+            console.log(keyValidation)
             return NextResponse.json({ err: "handler doesn't exist, handover cancelled" }, { status: 500 });
           }
         }

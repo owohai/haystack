@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => { if (typeof window !== "undefined") { const saved = localStorage.getItem("apiKey"); return saved ?? ""; } return ""; });
   const [trackingNumber, setTrackingNumber] = useState("");
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
@@ -18,6 +18,9 @@ export default function Home() {
     e.preventDefault();
     setMessage(null);
 
+    localStorage.setItem("apiKey", apiKey)
+    console.info("api key saved for next time")
+    
     try {
       const res = await fetch(`/api/pkg/${trackingNumber}`, {
         method: 'PATCH',
@@ -125,7 +128,7 @@ export default function Home() {
               type="text"
               value={handler}
               onChange={(e) => setHandler(e.target.value)}
-              placeholder="Handler to hand over to"
+              placeholder="Country code of the country handing over to"
               className="w-full p-2 border border-gray-700 bg-[var(--color-background)] text-[var(--color-foreground)] font-[family-name:var(--font-geist-mono)] focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>

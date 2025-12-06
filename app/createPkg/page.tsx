@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => { if (typeof window !== "undefined") { const saved = localStorage.getItem("apiKey"); return saved ?? ""; } return ""; });
   const [sender, setSender] = useState("");
   const [receiver, setReceiver] = useState("");
   const [history_location, setHistoryLocation] = useState("");
@@ -14,6 +14,9 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
+
+    localStorage.setItem("apiKey", apiKey)
+    console.info("api key saved for next time")
 
     if (!history_location) {
       setMessage({ info: `Failed to create package: no history location`, trackingNo: "" });

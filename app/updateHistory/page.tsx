@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function Home() {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(() => { if (typeof window !== "undefined") { const saved = localStorage.getItem("apiKey"); return saved ?? ""; } return ""; });
   const [trackingNumber, setTrackingNumber] = useState("");
   const [info, setInfo] = useState("");
   const [location, setLocation] = useState("");
@@ -13,6 +13,9 @@ export default function Home() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMessage(null);
+
+    localStorage.setItem("apiKey", apiKey)
+    console.info("api key saved for next time")
 
     try {
       const res = await fetch(`/api/pkg/${trackingNumber}/history`, {
